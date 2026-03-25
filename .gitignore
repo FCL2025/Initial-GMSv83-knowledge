@@ -1,0 +1,24 @@
+# OpenClaw workspace files
+AGENTS.md
+BOOTSTRAP.md
+HEARTBEAT.md
+IDENTITY.md
+SOUL.md
+TOOLS.md
+USER.md
+
+# Logs
+logs/
+
+# Test files
+test-*.txt
+
+# Git files
+.git/
+
+# Any other non-markdown files
+*.mp4
+*.jpg
+*.png
+*.log
+*.sh
