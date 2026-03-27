@@ -226,7 +226,116 @@ public void init(byte[] serverPublicKey, byte[] clientPrivateKey)
    - RaGEZONE 有大量教程
    - MapleStory Reference Wiki 有完整文檔
 
+## 🆕 2026-03-27 新增：RustMS - Rust 實現 MapleStory v83 登入伺服器
+
+**GitHub**: https://github.com/neeerp/RustMS
+
+### 專案特點 (2026-03 重啟)
+- **2026 年 3 月重啟**，使用 AI coding assistant 輔助開發
+- 目前僅包含基本可用的 **Login Server**（監聽 localhost:8484）
+- 完全使用 Rust 語言從頭編寫
+- 支援加密協商（不需要禁用加密）
+- 特色：編譯後無需 JVM，記憶體佔用更少
+
+### RustMS 加密實現
+- `MapleAES (OFB 模式)` - 負責封包加密
+- `Shanda 加密` - 對稱加密演算法
+- `bcrypt` - 密碼雜湊
+
+### RustMS 登入流程
+```
+1. 客戶端連線到 localhost:8484
+2. 伺服器發送 handshake（含版本號 + IV）
+3. 客戶端回應（更換 IV）
+4. 之後所有通訊使用 Maplestory 自訂加密 + AES
+```
+
+### RustMS 教學價值
+1. 清晰的代碼結構（Rust ownership 模型）
+2. 完整加密實現開源
+3. 非 JVM 方案
+4. 學習現代 Rust（async/await、ORM、密碼學）
+
+---
+
+## 🆕 2026-03-27 新增：IDA Opcode 函數位址速查表 (v83 Rev 3.00)
+
+### 封包處理函數
+
+| 函數 | 位址 (v83 Rev 3.00) | 說明 |
+|------|-------------------|------|
+| `CClientSocket::ProcessPacket` | - | 封包分發入口 |
+| `CLogin::OnPacket` | 0x0051E062 | 登入相關 opcode |
+| `CWvsContext::OnPacket` | 0x0075055B | warp2map 之前 |
+| `CField::OnPacket` | 0x004D7212 | 遊戲中所有其餘 opcode |
+| `CCashShop::OnPacket` | 0x00459626 | 現金商店 opcode |
+
+### CInPacket 讀取函數
+
+| IDA 函數 | MaplePacketWriter 方法 | 讀取大小 |
+|---------|----------------------|---------|
+| `CInPacket::Decode1` | `write` | 1 byte |
+| `CInPacket::Decode2` | `writeShort` | 2 bytes |
+| `CInPacket::Decode4` | `writeInt` | 4 bytes |
+| `CInPacket::DecodeBuffer` | `writeLong` | 8 bytes |
+| `CInPacket::DecodeStr` | `writeMapleAsciiString` | 可變 |
+
+### CLogin::OnPacket Switch Cases (v83)
+
+每個 case 值對應一個具體的 OnXXX 函數：
+| case 值 | 函數名稱 |
+|---------|---------|
+| 0 | OnCheckPasswordResult |
+| 1 | (loginotp / 二階段驗證) |
+| 2 | (伺服器列表) |
+| ... | ... |
+
+### 所有封包都經過的函數鏈
+```
+CClientSocket::ProcessPacket
+    ↓
+根據 opcode header 分發到:
+    - CLogin::OnPacket (登入 opcode)
+    - CWvsContext::OnPacket (warp2map 之前的 opcode)
+    - CField::OnPacket (遊戲中所有其餘 opcode)
+```
+
+### IDA 分析技巧
+1. **靜態分析**：找到 CLogin::OnPacket 的 switch case
+2. **動態分析**：在 CInPacket::Decode2 設斷點觀察 opcode
+3. **交叉引用**：每個 case 內部會調用具體的 OnXXX 函數
+
+### v83 LAN 跨 PC 連線常見錯誤
+
+| 錯誤碼 | Hex 值 | 意義 | 根本原因 |
+|--------|--------|------|---------|
+| `-2147467259` | `0x80004005` | Access Denied | 防火牆問題（非網路問題）|
+
+### 排查流程
+```
+PC2 連線失敗
+    ↓
+確認錯誤碼是否為 0x80004005
+    ↓ 是
+    ↓
+確認兩台 PC 在同一 LAN 網段 ✓
+    ↓
+確認伺服器 listen 0.0.0.0 ✓
+    ↓
+檢查 Windows 防火牆
+    ↓
+    netsh advfirewall set allprofiles state off (測試用)
+    ↓
+若使用 Hamachi → 確認同一 Hamachi 網路
+```
+
+### 防火牆快速設定
+```cmd
+netsh advfirewall firewall add rule name="MapleStory Login" dir=in action=allow protocol=tcp localport=7575
+netsh advfirewall firewall add rule name="MapleStory Game" dir=in action=allow protocol=tcp localport=8484
+```
+
 ---
 
 *更新時間: 2026-03-27*
-*主要來源: MapleStory Reference Wiki, RaGEZONE, GitHub 開源項目*
+*主要來源: MapleStory Reference Wiki, RaGEZONE, GitHub 開源項目, RustMS GitHub*

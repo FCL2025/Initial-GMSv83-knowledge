@@ -386,7 +386,133 @@ function action(mode, type, selection) {
 }
 ```
 
+## 🆕 2026-03-27 新增：NPCConversationManager.java 完整方法列表 (HeavenMS 源碼)
+
+**來源**: https://github.com/ronancpl/HeavenMS/blob/master/src/scripting/npc/NPCConversationManager.java
+
+### NPC Talk Type 值
+
+| Type 值 | 說明 |
+|---------|------|
+| `0` | 確定/下一頁 (speaker: "00 01") |
+| `1` | Yes/No (speaker: "") |
+| `4` | 簡單選擇選單 (speaker: "") |
+| `0x0C` | 接受/拒絕 (speaker: "") |
+
+### 髮型/顏色選擇 (sendStyle)
+
+```javascript
+// styles 是 int array，包含可選的 ID
+cm.sendStyle("選擇髮型:", [30000, 30010, 30020, 30030]);
+```
+
+### 數字輸入 (sendGetNumber)
+
+```javascript
+// 顯示數字輸入框
+// sendGetNumber(text, default, min, max)
+cm.sendGetNumber("請輸入數量:", 1, 1, 999);
+```
+
+### 文字輸入 (sendGetText)
+
+```javascript
+// 顯示文字輸入框
+cm.sendGetText("請輸入名字:");
+// 使用 getText() 取得輸入內容
+var input = cm.getText();
+```
+
+### 維度鏡 (sendDimensionalMirror)
+
+```javascript
+// 顯示維度鏡特殊功能
+cm.sendDimensionalMirror("選擇要去的地方:");
+```
+
+### 玩家外觀修改
+
+| 方法 | 說明 |
+|------|------|
+| `setHair(hair)` | 設定髮型（直接套用） |
+| `setFace(face)` | 設定臉型（直接套用） |
+| `setSkin(color)` | 設定皮膚顏色（直接套用） |
+
+### GM/特殊功能
+
+| 方法 | 說明 |
+|------|------|
+| `showEffect(effect)` | 顯示地圖特效 |
+| `displayGuildRanks()` | 顯示公會排名視窗 |
+| `resetStats()` | 重置角色屬性點 |
+| `maxMastery()` | 所有技能滿級 |
+| `canSpawnPlayerNpc(mapid)` | 檢查能否生成玩家NPC |
+| `getPlayerNPCByScriptid(id)` | 透過腳本ID取得玩家NPC |
+| `openShopNPC(shopId)` | 開啟指定商店 |
+
+### NPC 腳本源相容性問題 (2026-03 新發現)
+
+**問題**：
+- 不同音源（Cosmic、Kinoko、HeavenMS）的 NPC 腳本解析器版本不同
+- 較舊的腳本在新解析器可能不相容
+
+**原因**：
+- `importPackage` 和 `SavedLocationType` 處理差異
+- JDK 7+ 已廢棄 `importPackage`
+
+**解決方案**：
+1. 使用普遍支援的 `cm.` 函數
+2. 避免使用特定音源專有的 Package 路徑
+3. **避免 `importPackage`**（改用直接引用）
+4. 先在本地測試再部署到正式伺服器
+
+### 最佳實踐
+
+```javascript
+// ✅ 好的寫法
+var job = cm.getJob();
+cm.sendNext("你的職業是 " + cm.getJobName(job));
+
+// ❌ 避免的寫法
+importPackage(Packages.client);
+var job = c.getJob();
+
+// ✅ 使用 gainItem 的第三個參數控制提示
+cm.gainItem(2000002, 100, true);  // 顯示獲得提示
+cm.gainItem(2000002, -100, false); // 不顯示提示（用於扣除）
+```
+
+---
+
+## 🆕 2026-03-27 新增：GM Handbook 資料夾結構
+
+```
+handbook/
+├── NPC.txt      # NPC ID 和名稱
+├── item.txt     # 物品 ID 和名稱
+├── map.txt      # 地圖 ID 和名稱
+├── mob.txt      # 怪物 ID 和名稱
+└── quest.txt    # 任務 ID 和名稱
+```
+
+### GM 常用 NPC ID 參考
+
+| NPC 名稱 | NPC ID | 用途 |
+|---------|--------|------|
+| Aran 導師 | 9000000 | 弓箭手村 |
+| 起始導師 | 1022000 | 轉職相關 |
+| 楓之島導師 | 1031000 | 楓之島新手任務 |
+
+### NPC.tags 翻譯問題
+
+**問題**：Custom V18 Florist Files 中的 NPC tags 無法找到翻譯來源
+
+**解決方案**：
+1. 在 `client/client/` 資料夾中搜尋相關文字
+2. `txt.txt` 檔案中通常包含 UI 字串定義
+3. `NPC.wz` 中的 `tags` 欄位可能來自 `String.wz` 而非直接定義
+
 ---
 
 *更新時間: 2026-03-27*
-*來源: RaGEZONE, ElitePVPers, 社群教程整理*
+*來源: RaGEZONE, ElitePVPers, GitHub (HeavenMS NPCConversationManager.java), 社群教程整理*
