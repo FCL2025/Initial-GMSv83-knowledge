@@ -516,3 +516,208 @@ handbook/
 
 *更新時間: 2026-03-27*
 *來源: RaGEZONE, ElitePVPers, GitHub (HeavenMS NPCConversationManager.java), 社群教程整理*
+
+---
+
+## 🆕 2026-03-27 下午 新增：Dynamic NPC Shop Script (v83)
+
+**來源**: https://forum.ragezone.com/threads/dynamic-npc-shop-script-v83.1089979/
+
+### 核心概念
+使用 JavaScript 動態定義商店，**避免每次修改都要重啟伺服器**。
+
+### 範例程式碼
+```javascript
+// 動態商店 NPC
+var items = Array(
+    Array(4000000, 1000, 1),  // [物品ID, 價格, 數量]
+    Array(4000001, 2000, 5),
+    Array(4000002, 500, 10)
+);
+
+function start() {
+    var shop = cm.openShop(1);  // 商店ID (需與資料庫對應)
+    for (var i = 0; i < items.length; i++) {
+        shop.addItem(items[i][0], items[i][1], items[i][2]);
+    }
+    shop.send();
+}
+
+function action(mode, type, selection) {
+    if (mode == 1) {
+        status++;
+    } else {
+        status--;
+    }
+
+    if (status == 0) {
+        cm.sendSimple("請選擇:\n #b#L0#查看商品#l\n #L1#離開#l");
+    } else if (status == 1) {
+        if (selection == 0) {
+            // 開啟動態商店
+            var shop = cm.openShop(1);
+            for (var i = 0; i < items.length; i++) {
+                shop.addItem(items[i][0], items[i][1], items[i][2]);
+            }
+            shop.send();
+        } else {
+            cm.dispose();
+        }
+    }
+}
+```
+
+### 優勢
+| 特性 | 傳統 SQL 商店 | 動態商店 |
+|------|-------------|---------|
+| 修改方式 | 需改資料庫 + 重啟 | 直接修改 .js |
+| 測試速度 | 慢（需重啟） | 快（即時生效） |
+| 版本控制 | 需 export SQL | 直接 commit .js |
+| 靈活性 | 中等 | ✅ 極高 |
+
+### openShop 參數說明
+```javascript
+cm.openShop(shopId)
+```
+- `shopId`: 需與資料庫中的 `shopid` 對應
+- 若 shopId 不存在，會自動創建新的商店
+
+---
+
+## 🆕 NPC TYPE 值含義解析（RaGEZONE, 2026-03）
+
+**來源**: https://forum.ragezone.com/threads/npc-type.1262188/
+
+### NPC TYPE 對照表
+
+| Type 值 | 名稱 | 客戶端行為 | 腳本需求 | 範例 |
+|---------|------|-----------|---------|------|
+| `0` | 普通 NPC | 點擊後發送 NPC_TALK 封包 | ✅ 需要 `.js` 腳本 | 一般任務/對話 NPC |
+| `1` | 商店 NPC | 點擊後直接開啟商店介面 | ⚠️ 可有可無 | 商人、鐵匠 |
+| `2` | 拍賣 NPC | 點擊後開啟拍賣介面 | ❌ 不需要 | 拍賣管理員 |
+| `3` | 保險箱 NPC | 點擊後開啟保險箱 | ❌ 不需要 | 銀行 NPC |
+| `4~6` | 特殊 NPC | 各類特殊功能 | ❌ 不需要 | 各類系統 NPC |
+
+### 如何在 HaRepacker 中查看/修改 NPC TYPE
+
+```
+1. 使用 HaRepacker 開啟 NPC.wz
+2. 找到目標 NPC 的 .img 檔案（如 9000000.img）
+3. 展開節點：9000000.img → info
+4. 找到 type 屬性
+5. 雙擊修改值
+6. 保存並重新載入 WZ
+```
+
+### 注意事項
+- **Type 0 → Type 1**: 商店 NPC 不需要腳本，但可以加腳本添加額外功能
+- **Type 1 仍可加腳本**: 點擊時先執行腳本再開商店
+- **修改 TYPE 後要重啟客戶端**: WZ 更改需要重新載入
+
+---
+
+## 🆕 NPC 腳本源相容性問題（RaGEZONE, 2026-03）
+
+**來源**: https://forum.ragezone.com/threads/kinoko-npc-scripts.1261538/
+
+### 相容性問題總覽
+
+| 問題 | 說明 | 解決方案 |
+|------|------|---------|
+| 腳本解析器版本不同 | Cosmic、Kinoko、HeavenMS 可能使用不同版本的 Rhino | 使用普遍支援的 `cm.` 函數 |
+| Package 路徑差異 | 不同音源的 Package 路徑不同 | 避免使用特定音源專有路徑 |
+| `importPackage` 廢棄 | JDK 7+ 廢棄了 `importPackage` | 使用 `var` 宣告而非 import |
+
+### 跨音源相容程式碼範例
+
+```javascript
+// ❌ 可能不相容的寫法
+importPackage(Packages.server.maps);
+// 或
+var mapleInventory = Java.type("net.server.world.MapleInventory");
+
+// ✅ 普遍支援的寫法
+var status = 0;
+function start() {
+    cm.sendNext("Hello!");
+}
+```
+
+### 不同音源推薦使用的函數
+
+| 函數前綴 | Cosmic | Kinoko | HeavenMS | 說明 |
+|---------|--------|--------|----------|------|
+| `cm.` | ✅ | ✅ | ✅ | ConversationManager |
+| `npc.` | ⚠️ | ✅ | ⚠️ | NPC 專有函數 |
+| `player.` | ⚠️ | ✅ | ✅ | 玩家相關 |
+
+### 最佳實踐
+1. **使用 `cm.` 作為主要介面** — 這是最普遍支援的
+2. **避免 `importPackage`** — 使用 `var` 而非 Java imports
+3. **測試後再部署** — 先在本地測試確認相容
+4. **使用普遍支援的資料型別** — `var` 而非 `int`、`String`
+
+---
+
+## 🆕 NPC 腳本除錯技巧（2026-03 更新）
+
+### 常見錯誤
+
+| 錯誤 | 原因 | 解決方案 |
+|------|------|---------|
+| `cm is not defined` | 腳本未正確定義 `cm` | 確認腳本在 `scripts/npc/` 目錄 |
+| `status is not defined` | 未宣告 `status` 變數 | 在函數外宣告 `var status = 0;` |
+| 對話框無法關閉 | `dispose()` 位置錯誤 | 確保在最後的 `else` 分支呼叫 |
+| 商店不開啟 | `openShop` ID 錯誤 | 確認 shopId 存在於資料庫 |
+| 無限迴圈 | `status` 未正確遞增 | 檢查 `action` 函數中的 `status++` |
+
+### 除錯技巧
+
+```javascript
+// 使用 say() 代替 sendNext() 進行除錯
+function start() {
+    // cm.sendNext("Debug message");
+    cm.say("Debug: status = " + status);
+}
+
+// 確認 NPC 是否被正確呼叫
+function start() {
+    cm.sendNext("NPC ID: " + cm.getNpc() + " is speaking");
+}
+```
+
+### 測試腳本熱重載（部分音源支援）
+```
+1. 將 .js 檔案放入 scripts/npc/ 目錄
+2. 在遊戲中觸發 NPC
+3. 若伺服器支援熱重載，無需重啟
+4. 否則需重啟伺服器
+```
+
+---
+
+## 🆕 NPC 腳本學習資源（2026-03 更新）
+
+### GitHub 開源腳本參考
+
+| 專案 | 說明 |
+|------|------|
+| [HeavenMS](https://github.com/ronancpl/HeavenMS) | 最完整的 NPC 腳本集合 |
+| [Cosmic](https://github.com/P0nk/Cosmic) | 活躍開發中的 NPC 腳本 |
+| [jonnylin13/Maple83](https://github.com/jonnylin13/Maple83) | 早期 v83 腳本參考 |
+
+### HeavenMS NPC 腳本學習價值
+- ✅ 完整的腳本集合
+- ✅ 涵蓋各類 NPC 類型（商人、任務、傳送）
+- ✅ 清晰的程式碼結構
+- ✅ 持續更新
+
+### 推薦學習順序
+```
+1. 基礎：Merchant (商人) NPC 腳本
+2. 进阶：Quest (任務) NPC 腳本
+3. 高级：Event (事件) NPC 腳本
+4. 專家：自訂功能 NPC（如技能學習、等級提升）
+```
+
+*🐱 超級貓咪 - 更新於 2026-03-27 15:57 UTC (第六十一次)*
