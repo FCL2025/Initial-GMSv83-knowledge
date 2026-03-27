@@ -1,5 +1,90 @@
 # NPC 腳本編寫完整指南 (v83)
 
+---
+
+## 🆕 Kinoko 新型 NPC 腳本 (RaGEZONE, 2026-02)
+
+**來源**: https://forum.ragezone.com/threads/kinoko-npc-scripts.1261538/
+
+### 傳統寫法 vs Kinoko 寫法
+
+| 寫法 | 適用音源 | 狀態管理 | 複雜度 |
+|------|---------|---------|--------|
+| 傳統 status 方式 | Cosmic, HeavenMS | 手動 status++ | 中等 |
+| Kinoko 新型方式 | Kinoko | 無需 status | 簡單 |
+
+### 傳統 status 寫法（Cosmic, HeavenMS）
+```javascript
+var status = 0;
+
+function start() {
+    status = -1;
+    action(1, 0, 0);
+}
+
+function action(mode, type, selection) {
+    if (mode == -1 || mode == 0) {
+        cm.dispose();
+        return;
+    }
+    
+    if (mode == 1) {
+        status++;
+    } else {
+        status--;
+    }
+    
+    switch(status) {
+        case 0:
+            cm.sendNext("你好！");
+            break;
+        case 1:
+            cm.sendSimple("選擇:\n #b#L0#購買#l\n #L1#出售#l");
+            break;
+        // ...
+    }
+}
+```
+
+### Kinoko 新型寫法（無需 status）
+```javascript
+function start() {
+    npc.sayNext("你好！");
+}
+
+// Kinoko 專用語法
+function npc.sayNext(message) {
+    // 自動處理對話流程
+}
+
+function npc.sayYesNo(message) {
+    // 自動處理 Yes/No
+}
+
+function npc.askText(message, defaultText, minLen, maxLen) {
+    // 自動處理文字輸入
+}
+```
+
+### 腳本源相容性問題
+
+**問題**：不同音源（Cosmic、Kinoko、HeavenMS）的 NPC 腳本解析器版本不同。
+
+**解決方案**：
+```javascript
+// 方案1: 在 source 中 include 較舊版本的 script reader
+// 方案2: 使用相容格式編寫腳本
+// 方案3: 先在本地測試再部署
+```
+
+**最佳實踐**：
+- ✅ 使用普遍支援的 `cm.` 函數
+- ❌ 避免使用特定音源專有的 Package 路徑
+- ❌ 避免 `importPackage`（JDK 7+ 已廢棄）
+- ✅ 在目標音源上驗證
+
+---
+
 ## 腳本位置
 - **一般 NPC**: `scripts/npc/` 目錄，每個 NPC ID 對應一個 `.js` 檔案
 - **Quest NPC**: `scripts/quest/`
