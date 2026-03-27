@@ -22,3 +22,4 @@ test-*.txt
 *.png
 *.log
 *.sh
+agents/
