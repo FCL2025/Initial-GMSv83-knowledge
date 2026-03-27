@@ -588,7 +588,7 @@ cm.openShop(shopId)
 
 **來源**: https://forum.ragezone.com/threads/npc-type.1262188/
 
-### NPC TYPE 對照表
+### NPC TYPE 對照表（完整版）
 
 | Type 值 | 名稱 | 客戶端行為 | 腳本需求 | 範例 |
 |---------|------|-----------|---------|------|
@@ -598,8 +598,11 @@ cm.openShop(shopId)
 | `3` | 保險箱 NPC | 點擊後開啟保險箱 | ❌ 不需要 | 銀行 NPC |
 | `4~6` | 特殊 NPC | 各類特殊功能 | ❌ 不需要 | 各類系統 NPC |
 
-### 如何在 HaRepacker 中查看/修改 NPC TYPE
+### Type 0 和 Type 1 的關鍵差異
+- **Type 0**：客戶端會發送 `NPC_TALK` 封包到伺服器，等待腳本回應
+- **Type 1**：客戶端直接打開商店介面（不經過腳本），但腳本仍可添加額外功能
 
+### 如何在 HaRepacker 中查看/修改 NPC TYPE
 ```
 1. 使用 HaRepacker 開啟 NPC.wz
 2. 找到目標 NPC 的 .img 檔案（如 9000000.img）
@@ -609,10 +612,77 @@ cm.openShop(shopId)
 6. 保存並重新載入 WZ
 ```
 
-### 注意事項
-- **Type 0 → Type 1**: 商店 NPC 不需要腳本，但可以加腳本添加額外功能
-- **Type 1 仍可加腳本**: 點擊時先執行腳本再開商店
-- **修改 TYPE 後要重啟客戶端**: WZ 更改需要重新載入
+### 修改 TYPE 後的注意事項
+- **Type 0 → Type 1**：商店 NPC 不需要腳本，但可以加腳本添加額外功能
+- **Type 1 仍可加腳本**：點擊時先執行腳本再開商店
+- **修改 TYPE 後要重啟客戶端**：WZ 更改需要重新載入
+
+---
+
+## 🆕 IntransigentMS ECMAScript 6 NPC 腳本源碼（GitHub, 2026-03 新發現）
+
+**GitHub**: https://github.com/NoetherEmmy/intransigentms-scripts
+
+### 核心特點
+- 使用 **Nashorn 引擎** 執行 JavaScript
+- 遵循 **ECMAScript 6 標準**
+- 完整開源的 NPC 腳本源碼集合
+
+### 與傳統 Rhino/JDK 6 腳本的差異
+
+| 特性 | 傳統寫法 | ECMAScript 6 寫法 |
+|------|---------|------------------|
+| 類型導入 | `importPackage(Packages.xxx)` | `const Xxx = Java.type("xxx")` |
+| 除錯輸出 | `cm.dispose()` + `cm.sendNext()` | `print("debug")` |
+| 字串拼接 | `+` 運算子 | 模板字串 |
+| Lambda | 不支援 | `arr.map(x => x * 2)` |
+
+### 範例程式碼
+```javascript
+// 使用 ECMAScript 6 const 宣告
+const MapleCharacter = Java.type("net.sf.odinms.client.MapleCharacter");
+const SkillFactory = Java.type("net.sf.odinms.server.maps.SkillFactory");
+
+function start() {
+    print("NPC 啟動 - 開始對話");  // 輸出到伺服器 console
+    cm.sendNext("歡迎來到我的商店！");
+}
+
+function action(mode, type, selection) {
+    if (mode === -1 || (mode === 0 && status === 0)) {
+        cm.dispose();
+        return;
+    }
+    
+    if (mode === 1) {
+        status++;
+    } else {
+        status--;
+    }
+    
+    // 使用 ECMAScript 6 箭頭函數
+    const jobName = getJobName(cm.getJob());
+    cm.sendNext("你的職業是 " + jobName);
+    cm.dispose();
+}
+
+function getJobName(job) {
+    var jobs = {
+        0: "新手",
+        100: "戰士",
+        200: "法師",
+        300: "弓箭手",
+        400: "盜賊"
+    };
+    return jobs[job] || "未知";
+}
+```
+
+### IntransigentMS 的學習價值
+- ✅ 完整腳本集合（各類 NPC）
+- ✅ ECMAScript 6 現代寫法
+- ✅ 涵蓋任務、商人、傳送、等級提升
+- ✅ 可直接移植到 HeavenMS / Cosmic
 
 ---
 
