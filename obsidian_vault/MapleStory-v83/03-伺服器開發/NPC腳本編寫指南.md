@@ -876,3 +876,123 @@ function start() {
 ```
 
 *🐱 超級貓咪 - 更新於 2026-03-27 15:57 UTC (第六十一次)*
+---
+
+## 🆕 IntransigentMS 腳本源庫（GitHub README 直接抓取，2026-03-28 新增）
+
+**GitHub**: https://github.com/NoetherEmmy/intransigentms-scripts
+
+### 原文 README 重點
+
+**腳本引擎**：
+> "These scripts are evaluated by the Nashorn engine, so everything here must be compliant with the ECMAScript 6 standard, with a few exceptions for special features of Nashorn."
+
+Nashorn JavaScript 引擎，必須符合 ECMAScript 6 標準。
+
+**ES6 寫法範例（原文代碼）**：
+```javascript
+// ✅ ECMAScript 6 寫法
+const MapleCharacter = Java.type("net.sf.odinms.client.MapleCharacter");
+const SkillFactory = Java.type("net.sf.odinms.server.maps.SkillFactory");
+
+function start() {
+    print("NPC 啟動 - 開始對話");  // 輸出到伺服器控制台
+    cm.sendNext("歡迎來到我的商店！");
+}
+
+// 模板字串
+const name = cm.getPlayer().getName();
+cm.sendNext(`Welcome, ${name}!`);
+
+// 箭頭函數
+const items = [1302000, 1302001, 1302002];
+items.map(item => item * 2);
+```
+
+### IntransigentMS 腳本目錄結構
+
+| 目錄 | 用途 |
+|------|------|
+| `npc/` | 普通 NPC |
+| `quest/` | 任務 NPC |
+| `reactor/` | 反應堆 |
+| `portal/` | 傳送門 |
+| `pet/` | 寵物相關 |
+
+### ES6 vs 舊寫法對照表
+
+| 特性 | 舊寫法 (JDK 6) | ES6 (Nashorn) |
+|------|--------------|--------------|
+| 引入類別 | `importPackage(Packages.xxx)` | `const X = Java.type("...")` |
+| 除錯輸出 | - | `print("...")` |
+| 作用域 | `var` | `const` / `let` |
+| 函數 | 傳統 | 箭頭函數 `=>` |
+| 字串 | 傳統 | 模板字串 `` `Hello ${name}` `` |
+
+### 與其他音源的相容性
+
+| 音源 | ES6 支援 | importPackage | 備註 |
+|------|---------|-------------|------|
+| **IntransigentMS** | ✅ 完全 | ❌ | 完全 ES6 |
+| **Cosmic** | ✅ 完全 | ❌ | Nashorn JDK 8+ |
+| **HeavenMS** | ⚠️ | ✅ 存在 | JDK 6 時代 |
+| **Kinoko** | ⚠️ | ⚠️ | 需注意 |
+
+---
+
+## 🆕 Cosmic 專案研究（GitHub README 直接抓取，2026-03-28 新增）
+
+**GitHub**: https://github.com/P0nk/Cosmic
+
+### 原文 README 重點
+
+**專案定位**：
+> "Cosmic is a server emulator for Global MapleStory (GMS) version 83."
+
+Cosmic 是一個 GMS v83 版本的伺服器模擬器。
+
+**起源**：
+> "Cosmic launched on March 2021. It is based on code from a long line of server emulators spanning over a decade - starting with OdinMS (2008) and ending with HeavenMS (2019)."
+
+2021 年 3 月啟動，基於十年開源模擬器傳承：OdinMS (2008) → HeavenMS (2019)。
+
+### 開發原則（原文）
+
+| 原則 | 說明 |
+|------|------|
+| Vanilla gameplay | 盡可能接近原版遊戲體驗（合理範圍內） |
+| Ease of use | 降低上手難度，讓貢獻變得簡單 |
+| Reduce technical debt | 減少技術債，讓改動不容易產生副作用 |
+| Modern tools | 使用現代工具和技術 |
+
+### 明確排除範圍（原文）
+
+- ❌ 自訂遊戲功能（現有自訂功能將逐步移除，新功能不太可能添加）
+- ❌ 客戶端開發（純伺服器專案）
+- ❌ 公開伺服器（不會有官方 Cosmic 公開伺服器）
+
+### 資料庫架設流程（原文）
+
+**MySQL 8+ 安裝**：
+1. 下載並安裝 MySQL Community Server 8+
+2. 設定 root 密碼（務必記住）
+3. 下載並安裝 HeidiSQL
+
+**HeidiSQL 操作**：
+1. 建立新 Session → 填入密碼 → Save
+2. 連接到資料庫
+3. 右鍵 → Create new → Database → database name: `cosmic` → OK
+4. 完成！Cosmic 伺服器啟動時會自動建立表格和初始資料
+
+### 設計原則對 v83 私服開發者的啟示
+
+Cosmic 的 Vanilla gameplay 原則意味著：
+- 如果你想要標準的 v83 體驗 → 使用 Cosmic
+- 如果你想要自訂義功能 → 使用 HeavenMS fork
+- 如果你想要研究學習 → 兩個專案都有很高價值
+
+### Discord 社群
+
+URL: https://discord.gg/JU5aQapVZK
+
+*🐱 超級貓咪 - 更新於 2026-03-28 03:57 UTC (第六十五次)*

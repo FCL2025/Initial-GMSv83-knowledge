@@ -339,3 +339,70 @@ netsh advfirewall firewall add rule name="MapleStory Game" dir=in action=allow p
 
 *更新時間: 2026-03-27*
 *主要來源: MapleStory Reference Wiki, RaGEZONE, GitHub 開源項目, RustMS GitHub*
+---
+
+## 🆕 MaplePacketPuller + SpiritIDAPlugin（GitHub README 直接抓取，2026-03-28 新增）
+
+**GitHub**: 
+- https://github.com/Bratah123/MaplePacketPuller
+- https://github.com/Bratah123/SpiritIDAPlugin
+
+### SpiritIDAPlugin 原文 README
+
+> "For a better experience using this, check out the SpiritIDAPlugin project! Reads keywords from IDA-generated pseudocode, and formats them into a form that is friendly for server encodes."
+
+SpiritIDAPlugin 是 MaplePacketPuller 的 IDA Pro 插件版，可直接在 IDA 中提取封包結構。
+
+**功能**：
+- 從 IDA 生成的 pseudocode 讀取關鍵字並格式化為伺服器 encode 友好的格式
+- 支援自訂準確度選項
+- 自動搜尋 InHeader opcode
+- 將所有封包結構寫入 FuncOutput/ 目錄
+
+**⚠️ 已知限制**：
+> "while() loops aren't properly handled, i.e. whether a decode is in the scope of one well. Possible circumvention: may be rectified if GET_ALL_DECODES = true"
+
+while() 迴圈處理不完善。建議設 `GET_ALL_DECODES=true` 來提高準確度。
+
+### MaplePacketPuller 支援環境（原文）
+
+| 環境 | 支援狀態 |
+|------|---------|
+| Python 3.8.5 | ✅ 測試通過 |
+| Python 3.6.12 & 3.8.6 | ✅ 測試通過 |
+| IDA Pro 7.0 (32-bit) | ✅ 測試通過 |
+| IDA Pro 7.5 | ✅ 測試通過 |
+| IDA Pro 6.8 | ✅ 測試通過 |
+| Python 2.7 | ❌ 不相容 (os.scandir) |
+
+**Python 3.6 注意**：f-strings 處理反斜杠有問題，已在 commit 10a9fd86c4da264ef6d1d73a6aca248343cf63f6 中修復。
+
+### 完整工作流程（原文）
+
+```
+INPUT: .txt file containing C-pseudocode from IDA disassembly
+OUTPUT: .txt file containing packet structure & console output
+
+NOTE: You will have to create a .txt file in the Functions directory
+with the copy-pasted pseudocode from IDA (examples in there)
+
+1. Navigate to MaplePacketPuller/IDA Maple Script/src/main/python in CLI and run main.py
+   Alternatively use a Python IDE like PyCharm
+2. Input the type of Analysis you want to do
+3. Input the name of the file you want to analyze, i.e. the txt file you've just created
+4. Let the program analyze it.
+5. Now packet structure should be yours!
+```
+
+### MaplePE vs MaplePacketPuller 詳細比較（原文 + 補充）
+
+| 功能 | MaplePE | MaplePacketPuller |
+|------|---------|------------------|
+| 運作方式 | 即時截獲 | 離線分析 |
+| 平台 | Windows | 跨平台 (Python) |
+| 加密處理 | Hook 函數，直接明文 | 需手動解密 |
+| 封包注入 | ✅ 支援 | ❌ |
+| IDA 整合 | ❌ | ✅ SpiritIDAPlugin |
+| 程式碼生成 | ✅ | ❌ |
+
+*🐱 超級貓咪 - 更新於 2026-03-28 03:57 UTC (第六十五次)*
