@@ -1086,3 +1086,174 @@ function action(mode, type, selection) {
 ---
 
 *🐱 超級貓咪 - 更新於 2026-03-28 08:57 UTC (第七十次)*
+
+---
+
+## 📦 2026-03-28 下午更新：擴展函數庫 & 實用範例
+
+### 額外常用函數
+
+```javascript
+// ===== 玩家狀態查詢 =====
+
+// 檢查玩家是否在自由市場
+cm.getMapId() == 910000000 ? "在自由市場" : "不在";
+
+// 檢查玩家是否是 GM
+cm.getPlayer().isGM() ? "你是GM" : "普通玩家";
+
+// 檢查玩家當前帳號狀態
+cm.getPlayer().getAccountID();
+
+// 獲取玩家所在頻道
+cm.getClient().getChannel();
+
+// ===== 怪物/NPC 操控 =====
+
+// 讓 NPC 面向特定方向 (0-8)
+cm.setNpcRotation(npcId, 3);
+
+// 讓 NPC 顯示表情
+cm.setNPCValue(npcId, "emotion", 1);
+
+// 召喚怪物
+cm.spawnMonster(mobId, x, y);
+
+// 驅逐怪物
+cm.removeMonster(mobId);
+
+// ===== 任務增強 =====
+
+// 給予/檢查榮譽值 (honor)
+cm.getPlayer().addHonor(1);
+cm.getPlayer().getHonor();
+
+// ===== 技能相關 =====
+
+// 學習技能
+cm.teachSkill(skillId, level, masterLevel);
+
+// 檢查技能是否習得
+cm.getPlayer().hasSkill(skillId);
+
+// =====  Buff/狀態 =====
+
+// 給予臨時 buff (applyBuff)
+cm.applyBuff(effectId, durationMs);
+
+// 驅散特定 buff
+cm.removeBuff(effectId);
+
+// ===== 社交/組隊 =====
+
+// 檢查玩家是否在隊伍中
+cm.getPlayer().getParty() != null;
+
+// 獲取隊伍成員數
+cm.getPlayer().getParty().getMemberCount();
+
+// 隊伍傳送（所有成員）
+cm.warpParty(mapId);
+
+// ===== 事件/副本 =====
+
+// 開始事件
+cm.startEvent(eventName);
+
+// 檢查玩家是否符合副本門票
+cm.hasItem(ticketItemId) && cm.getPlayer().getLevel() >= requiredLevel;
+```
+
+### 完整商店 NPC 範例（帶庫存檢查）
+
+```javascript
+var status = 0;
+var shopTax = 1.1; // 10% 稅
+
+function start() {
+    status = -1;
+    action(1, 0, 0);
+}
+
+function action(mode, type, selection) {
+    if (mode == -1 || mode == 0) {
+        cm.dispose();
+        return;
+    }
+    if (mode == 1) status++;
+    
+    switch (status) {
+        case 0:
+            cm.sendNext("哈囉 #h #! 歡迎來到 #b#m' + cm.getMapId() + '##k 商店。");
+            break;
+        case 1:
+            var shop = cm.openShop(1);
+            shop.addItem(2000002, 1000, 100);   // 超級藥水 x100
+            shop.addItem(2000003, 500, 50);    // 活力藥水 x50
+            shop.addItem(2050004, 50, 500);     // 80% STR 披鍊
+            shop.send();
+            cm.dispose();
+            break;
+    }
+}
+```
+
+### 事件腳本範例（定時任务）
+
+```javascript
+var status = 0;
+
+function start() {
+    status = -1;
+    action(1, 0, 0);
+}
+
+function action(mode, type, selection) {
+    if (mode == -1 || mode == 0) {
+        cm.dispose();
+        return;
+    }
+    if (mode == 1) status++;
+    
+    switch (status) {
+        case 0:
+            cm.sendYesNo("你想報名 #r每週活動#k 嗎？報名後會在週六20:00自動傳送到活動地圖。");
+            break;
+        case 1:
+            if (cm.hasItem(4001320, 1)) { // 報名道具
+                cm.removeItem(4001320, 1);
+                cm.getPlayer().setEventRegistered(true);
+                cm.sendOk("報名成功！記得週六20:00上線！");
+            } else {
+                cm.sendOk("你沒有報名道具，無法參加活動。");
+            }
+            cm.dispose();
+            break;
+    }
+}
+```
+
+### 腳本調試技巧
+
+```javascript
+// 在伺服器主控台輸出調試信息
+cm.getPlayer().dropMessage(5, "[DEBUG] Current Status: " + status);
+cm.getPlayer().dropMessage(5, "[DEBUG] Player Level: " + cm.getPlayer().getLevel());
+cm.getPlayer().dropMessage(5, "[DEBUG] Meso: " + cm.getMeso());
+
+// 快速測試：給予大量金幣確認腳本是否執行
+cm.gainMeso(1000000000); // 10億（測試用）
+```
+
+### NPC 腳本 vs 事件腳本
+
+| 類型 | 觸發方式 | 檔案位置 | 適合場景 |
+|------|---------|---------|---------|
+| NPC 腳本 | 點擊 NPC 對話 | `scripts/npc/` | 商店、任務接取、資訊 |
+| 事件腳本 | 地圖觸發器 | `scripts/event/` | 副本、活動、地圖事件 |
+| React 腳本 | 接觸 Reactor | `scripts/reactor/` | 擊破箱子、機關觸發 |
+| 登入腳本 | 玩家登入 | `scripts/onUserEnter/` | 登入提示、地圖自動傳送 |
+
+---
+
+*📚 學習整合於 2026-03-28 13:27 UTC (第 74 次更新)*
