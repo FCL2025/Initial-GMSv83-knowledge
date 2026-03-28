@@ -996,3 +996,93 @@ Cosmic 的 Vanilla gameplay 原則意味著：
 URL: https://discord.gg/JU5aQapVZK
 
 *🐱 超級貓咪 - 更新於 2026-03-28 03:57 UTC (第六十五次)*
+
+---
+
+## 🆕 2026-03-28 新增：NPC TYPE 值完整對照表（RaGEZONE, 2026-03）
+
+**來源**: https://forum.ragezone.com/threads/npc-type.1262188/
+
+| Type 值 | 名稱 | 客戶端行為 | 腳本需求 | 範例 |
+|---------|------|-----------|---------|------|
+| `0` | 普通 NPC | 點擊後發送 NPC_TALK 封包 | ✅ 需要 `.js` 腳本 | 一般任務/對話 NPC |
+| `1` | 商店 NPC | 點擊後直接開啟商店介面 | ⚠️ 可有可無 | 商人、鐵匠 |
+| `2` | 拍賣 NPC | 點擊後開啟拍賣介面 | ❌ 不需要 | 拍賣管理員 |
+| `3` | 保險箱 NPC | 點擊後開啟保險箱 | ❌ 不需要 | 銀行 NPC |
+| `4~6` | 特殊 NPC | 各類特殊功能 | ❌ 不需要 | 各類系統 NPC |
+
+### Type 0 和 Type 1 的關鍵差異
+- **Type 0**：客戶端會發送 `NPC_TALK` 封包到伺服器，等待腳本回應
+- **Type 1**：客戶端直接打開商店介面（不經過腳本），但腳本仍可添加額外功能
+
+### 如何在 HaRepacker 中查看/修改 NPC TYPE
+```
+1. 使用 HaRepacker 開啟 NPC.wz
+2. 找到目標 NPC 的 .img 檔案（如 9000000.img）
+3. 展開節點：9000000.img → info
+4. 找到 type 屬性
+5. 雙擊修改值
+6. 保存並重新載入 WZ
+```
+
+---
+
+## 🆕 Dynamic NPC Shop Script (RaGEZONE, 2016)
+
+**URL**: https://forum.ragezone.com/threads/dynamic-npc-shop-script-v83.1089979/
+
+### 核心概念
+使用 JavaScript 動態定義商店，**避免每次修改都要重啟伺服器**。
+
+### 範例程式碼
+```javascript
+// 動態商店 NPC
+var items = Array(
+    Array(4000000, 1000, 1),  // [物品ID, 價格, 數量]
+    Array(4000001, 2000, 5),
+    Array(4000002, 500, 10)
+);
+
+function start() {
+    var shop = cm.openShop(1);  // 商店ID (需與資料庫對應)
+    for (var i = 0; i < items.length; i++) {
+        shop.addItem(items[i][0], items[i][1], items[i][2]);
+    }
+    shop.send();
+}
+
+function action(mode, type, selection) {
+    if (mode == 1) {
+        status++;
+    } else {
+        status--;
+    }
+
+    if (status == 0) {
+        cm.sendSimple("請選擇:\n #b#L0#查看商品#l\n #L1#離開#l");
+    } else if (status == 1) {
+        if (selection == 0) {
+            // 開啟動態商店
+            var shop = cm.openShop(1);
+            for (var i = 0; i < items.length; i++) {
+                shop.addItem(items[i][0], items[i][1], items[i][2]);
+            }
+            shop.send();
+        } else {
+            cm.dispose();
+        }
+    }
+}
+```
+
+### 優勢
+| 特性 | 傳統 SQL 商店 | 動態商店 |
+|------|-------------|---------|
+| 修改方式 | 需改資料庫 + 重啟 | 直接修改 .js |
+| 測試速度 | 慢（需重啟） | 快（即時生效） |
+| 版本控制 | 需 export SQL | 直接 commit .js |
+| 靈活性 | 中等 | ✅ 極高 |
+
+---
+
+*🐱 超級貓咪 - 更新於 2026-03-28 08:57 UTC (第七十次)*
