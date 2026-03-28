@@ -406,3 +406,151 @@ with the copy-pasted pseudocode from IDA (examples in there)
 | 程式碼生成 | ✅ | ❌ |
 
 *🐱 超級貓咪 - 更新於 2026-03-28 03:57 UTC (第六十五次)*
+
+---
+
+## 🆕 MapleStory v83 加密機制最新研究 (maplelib/Go, 2026-03)
+
+**來源**: https://pkg.go.dev/github.com/defaultmagi/maplelib
+
+### 核心原則：第一個封包是明文
+
+> "The first packet sent / received will always be in plain-text (not encrypted)"
+
+MapleStory 所有連線階段的**第一個封包**都是明文，用於交換加密參數。
+
+### 兩組金鑰系統
+
+MapleStory 使用**兩組獨立的加密金鑰**：
+
+| 金鑰 | 用途 | 方向 |
+|------|------|------|
+| **Send Key** | 客戶端加密 / 伺服器解密 | C → S |
+| **Recv Key** | 伺服器加密 / 客戶端解密 | S → C |
+
+每次連線時，兩組金鑰的 IV 都會隨機生成並透過 Hello Packet 交換。
+
+### MapleCrypto 混淆Opcode公式
+
+```java
+// Opcode 混淆（v83）
+int verify = (opcode ^ iv[0]) + (iv[1] << 8);
+verify = (verify << 3) | (verify >> 13);  // rotate left 3 bits
+verify = verify & 0xFFFF;  // 取低位 16 bits
+```
+
+### 三層加密架構（v83 完整版）
+
+```
+明文封包
+    ↓
+[1] MapleCrypto (版本特定 XOR + 移位混淆)
+    ↓
+[2] AES-OFB (主要對稱加密)
+    ↓
+[3] Shanda 加密 (v83 早期版本殘留)
+    ↓
+網路傳輸
+```
+
+> ⚠️ 後來版本移除 Shanda，改用 `MapleCustomEncryption`。
+
+### AES 握手流程（RustMS 實現參考）
+
+```rust
+// 1. 客戶端連線 → 發送版本號 (明文)
+// 2. 伺服器驗證版本 → 回傳 serverIV (明文)
+// 3. 客戶端生成 clientIV → 回傳 (明文)
+// 4. 建立加密會話
+// 5. 之後所有封包加密
+```
+
+### maplelib (Go) 關鍵實現
+
+```go
+type MapleCrypto struct {
+    sendKey []byte  // 客戶端發送用
+    recvKey []byte  // 客戶端接收用
+    sendIV  []byte
+    recvIV  []byte
+}
+
+// AES-OFB 加密
+func (c *MapleCrypto) Encrypt(data []byte) []byte {
+    // ...
+}
+
+// AES-OFB 解密
+func (c *MapleCrypto) Decrypt(data []byte) []byte {
+    // ...
+}
+```
+
+### 排查解密失敗檢查清單
+
+| 檢查項目 | 正確值 | 錯誤症狀 |
+|---------|--------|---------|
+| AES Key | 版本決定的 32-byte key | 解密出乱码 |
+| IV | Hello Packet 協商的 IV | opcode 不匹配 |
+| Shanda Key | 版本特定的對稱金鑰 | 資料順序錯誤 |
+| 版本號 | 0x0053 (83) | Hello Packet 失敗 |
+| Opcode 表 | 需與客戶端匹配 | switch case 走错分支 |
+
+---
+
+## 🆕 Maple_Pshark — v83 專用封包 Logger (GitHub, 2026-03)
+
+**GitHub**: https://github.com/obstriker/Maple_Pshark
+
+### 核心功能
+| 功能 | 說明 |
+|------|------|
+| Hook 加密函數 | 直接截獲明文，繞過加密層 |
+| localhost 直接用 | 不需要額外 proxy |
+| 封包修改和注入 | Recv/Send 皆可攔截修改 |
+| 規則過濾 | 支援自訂規則過濾特定封包 |
+
+### 使用方式
+```
+1. 啟動 MapleStory localhost
+2. 啟動 Maple_Pshark
+3. 觀察封包日誌
+4. 使用規則過濾感興趣的封包
+```
+
+### 與 MaplePE 功能對比
+
+| 功能 | MaplePE | Maple_Pshark |
+|------|---------|-------------|
+| 封包截獲 | ✅ | ✅ |
+| 封包修改 | ✅ | ✅ |
+| 封包注入 | ✅ | ✅ |
+| 程式碼生成 | ✅ | ❌ |
+| 進程資訊提取 | ✅ | ❌ |
+| 開源 | ✅ | ✅ |
+
+---
+
+## 🆕 RustMS — MapleStory v83 登入伺服器 (2026-03 重啟)
+
+**GitHub**: https://github.com/neeerp/RustMS
+
+### 專案現況
+- **2026 年 3 月重啟**，使用 AI coding assistant 輔助
+- 目前僅有 Login Server（監聽 localhost:8484）
+- 大量遊戲邏輯待實現
+
+### 技術架構亮點
+| 特性 | 說明 |
+|------|------|
+| 完整加密實現 | MapleAES (OFB) + Shanda + bcrypt |
+| 非 JVM | 編譯後無需 JVM |
+| PostgreSQL + Diesel | 現代 ORM |
+| Rust ownership | 記憶體安全 |
+
+### 教學價值
+1. **清晰代碼結構** — 每個模組職責分明
+2. **完整加密實現** — 所有加密步驟都有文件說明
+3. **非 JVM 方案** — 展示 Rust 作為替代方案
+
+*🐱 超級貓咪 - 更新於 2026-03-28 20:57 UTC (第八十五次)*

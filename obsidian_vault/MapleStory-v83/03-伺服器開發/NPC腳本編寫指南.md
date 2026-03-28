@@ -1257,3 +1257,112 @@ cm.gainMeso(1000000000); // 10億（測試用）
 ---
 
 *📚 學習整合於 2026-03-28 13:27 UTC (第 74 次更新)*
+
+---
+
+## 🆕 NPC 腳本完整速查表 (2026-03 最新)
+
+### 腳本位置
+```
+scripts/npc/      # 一般 NPC (檔名 = NPC ID)
+scripts/quest/    # 任務 NPC
+scripts/event/    # 事件腳本
+scripts/reactor/  # 反應堆腳本
+scripts/portal/   # 傳送門腳本
+```
+
+### 核心模板
+
+```javascript
+var status = 0;
+
+function start() {
+    status = -1;
+    action(1, 0, 0);
+}
+
+function action(mode, type, selection) {
+    if (mode == -1 || (mode == 0 && status == 0)) {
+        cm.dispose();
+        return;
+    }
+    if (mode == 1) status++; else status--;
+    
+    switch(status) {
+        case 0:
+            cm.sendNext("你好！");
+            break;
+        case 1:
+            cm.sendSimple("選擇：\n #b#L0#購買#l\n #L1#離開#l");
+            break;
+        case 2:
+            if (selection == 0) cm.openShop(1);
+            cm.dispose();
+            break;
+    }
+}
+```
+
+### 常用 cm 函數速查
+
+| 函數 | 用途 |
+|------|------|
+| `cm.sendNext(text)` | 下一頁對話 |
+| `cm.sendSimple(text)` | 選擇選單 |
+| `cm.sendYesNo(text)` | Yes/No 對話框 |
+| `cm.sendGetText(text)` | 文字輸入 |
+| `cm.getPlayer()` | 玩家物件 |
+| `cm.gainItem(id, count)` | 給予物品 |
+| `cm.gainMesos(amount)` | 給予/扣除金幣 |
+| `cm.warp(mapId)` | 傳送 |
+| `cm.changeJob(jobId)` | 轉職 |
+| `cm.dispose()` | 結束對話 |
+| `cm.openShop(shopId)` | 開啟商店 |
+| `cm.teachSkill(id, level, masterLevel)` | 學習技能 |
+| `cm.startQuest(id)` | 開始任務 |
+| `cm.completeQuest(id)` | 完成任務 |
+
+### NPC TYPE 值速查
+
+| Type 值 | 客戶端行為 | 需要腳本 |
+|---------|-----------|---------|
+| `0` | 點擊發送 NPC_TALK | ✅ 需要 |
+| `1` | 直接開啟商店 | ⚠️ 可有可無 |
+| `2~6` | 特殊功能 | ❌ 不需要 |
+
+### Dynamic Shop NPC（避免重啟）
+
+```javascript
+var items = [
+    [2000002, 1000, 100],
+    [2000003, 500, 50]
+];
+
+function start() {
+    var shop = cm.openShop(1);
+    for (var i = 0; i < items.length; i++) {
+        shop.addItem(items[i][0], items[i][1], items[i][2]);
+    }
+    shop.send();
+    cm.dispose();
+}
+```
+
+### NPC 腳本常見錯誤
+
+| 錯誤 | 原因 | 解決 |
+|------|------|------|
+| `cm is not defined` | 腳本不在正確目錄 | 確認路徑 |
+| 無法關閉對話 | `dispose()` 位置錯誤 | 移到正確分支 |
+| 商店不開 | `shopId` 不存在 | 確認資料庫 |
+
+### 腳本源相容性原則
+
+| 寫法 | 支援度 |
+|------|--------|
+| `cm.xxx()` | ✅ 普遍支援 |
+| `const` + `Java.type()` | ✅ Cosmic/ES6 |
+| `importPackage()` | ⚠️ JDK 7+ 廢棄 |
+| `npc.xxx()` | ⚠️ 部分音源 |
+
+*🐱 超級貓咪 - 更新於 2026-03-28 20:57 UTC (第八十五次)*
