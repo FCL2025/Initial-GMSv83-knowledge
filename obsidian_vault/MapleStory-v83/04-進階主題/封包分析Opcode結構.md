@@ -554,3 +554,59 @@ func (c *MapleCrypto) Decrypt(data []byte) []byte {
 3. **非 JVM 方案** — 展示 Rust 作為替代方案
 
 *🐱 超級貓咪 - 更新於 2026-03-28 20:57 UTC (第八十五次)*
+
+---
+
+## 附錄：最新抓包工具 (2026-03-29 更新)
+
+### MaplePacketPuller
+- **用途**：從 IDA pseudocode 分析封包結構
+- **GitHub**: https://github.com/Bratah123/MaplePacketPuller
+- **特點**：
+  - 讀取 IDA 生成的 C 偽代碼
+  - 格式化為伺服器 encode 格式
+  - 支援 switch case 分析
+  - 可搜索 InHeader opcodes
+
+### Maple_Pshark
+- **用途**：即時封包攔截和修改
+- **GitHub**: https://github.com/obstriker/Maple_Pshark
+- **支援**：Mapleroyals v83 封包日誌
+- **功能**：
+  1. 攔截 Recv 訊息
+  2. 修改訊息內容
+  3. 注入封包 (Send/Recv)
+  4. 基於規則的封包過濾
+
+### 封包加密鑰匙配置 (v83)
+根據 HeavenMS/Cosmic 源碼：
+```java
+// MapleAESOFB.java 關鍵配置
+private static final byte[] CIPHER_KEY = ...;  // AES密鑰
+private static final int VERSION = 83;          // 版本號
+private static final int MapleType = 8;         // 伺服器類型
+```
+
+### AES 加密流程 (v83)
+1. 連接建立 → 發送 Hello Packet (明文)
+2. 交換 IV (初始化向量)
+3. 後續封包使用 AES-OFB 加密
+4. 每次發送後 IV 更新
+
+### 封包頭部格式
+```
+[4 bytes: Length][Opcode (2 bytes)][Data]
+Length = 整個封包長度 (包括 header)
+Opcode = 封包類型識別碼
+Data = 加密後的內容
+```
+
+### 常用封包範例
+```
+Warp to FM: 9C 00 (2 bytes opcode)
+Map Crash: A8 00 DF 00 00 00 00 00 00 00 01 0D 01 00 31
+```
+
+---
+
+*更新時間：2026-03-29 00:28 UTC*
